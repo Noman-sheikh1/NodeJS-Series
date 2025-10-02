@@ -1,4 +1,5 @@
 const http = require("http");
+const url=require("url");
 
 const server = http.createServer((req, res) => {
   if (req.url === "/") {
@@ -17,3 +18,12 @@ const server = http.createServer((req, res) => {
 server.listen(3000, () => {
   console.log("Server is running at http://localhost:3000/");
 });
+
+
+
+const myURL = 'https://www.example.com:8080/pathname?search=query#hash';
+
+const parsedURL = url.parse(myURL);
+
+console.log(parsedURL);
+
