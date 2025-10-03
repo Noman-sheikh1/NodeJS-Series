@@ -7,6 +7,34 @@ const PORT=8000;
 app.use(express.urlencoded({extended:false}));
 app.use(express.json()); 
 
+
+// Middleware 1: Logger
+app.use((req, res, next) => {
+    console.log('Middleware 1: Request received at ' + new Date());
+    next();
+});
+
+// Middleware 2: Add custom property
+app.use((req, res, next) => {
+    req.username = "Noman";   // adding data to request
+    console.log("Middleware 2: Added username to request");
+    next();
+});
+
+// Route Handler
+app.get('/', (req, res) => {
+    res.send(`Hello, ${req.username}`);
+});
+
+// Middleware 3: Error handling (example)
+app.use((err, req, res, next) => {
+    console.error("Error:", err.message);
+    res.status(500).send("Something went wrong!");
+});
+
+
+
+
  app.get("/api/users",(req,res)=>{
     return res.json(users);
  })
@@ -57,6 +85,8 @@ app.use(express.json());
     res.json({ status: "success", deletedUser });
   });
 });
+
+
 
 
  app.listen(PORT,()=>console.log("server started at port :",PORT));
