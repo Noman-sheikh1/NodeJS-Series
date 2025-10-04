@@ -2,7 +2,8 @@ const express=require("express");
 const app = express();
 
 app.get("/users", (req, res) => {
-  res.send("Fetching users...");
+    
+   res.send("Fetching users...");
 });
 
 app.post("/users", (req, res) => {
@@ -16,6 +17,8 @@ app.put("/users/:id", (req, res) => {
 app.delete("/users/:id", (req, res) => {
   res.send(`Deleting user with ID ${req.params.id}`);
 });
+
+
 
 
 app.listen(3000, () => {

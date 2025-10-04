@@ -36,7 +36,11 @@ app.use((err, req, res, next) => {
 
 
  app.get("/api/users",(req,res)=>{
-    return res.json(users);
+  const userAgent = req.headers['user-agent'];   //  request header
+    res.send(`Your User-Agent is: ${userAgent}`);
+  // res.setHeader("x-name","noman");//setting coustom header
+  
+  //   return res.json(users);
  })
 
   app.get("/api/users/:id",(req,res)=>{
