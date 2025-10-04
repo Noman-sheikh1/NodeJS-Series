@@ -1,96 +1,78 @@
-const express=require("express");
-const users=require("./MOCK_DATA.json");
-const app=express();
-const fs=require("fs");
-const PORT=8000;
+const express = require("express");
+const mongoose=require("mongoose")
+const { logReqRes,logResReq2 } = require("./middleware");
+const app = express();
+const PORT = 8000;
+app.use(express.json());
+const User=require("./models/user");
 
-app.use(express.urlencoded({extended:false}));
-app.use(express.json()); 
+// ✅ MongoDB Atlas Connection
+const uri = "mongodb+srv://maanb645_db_user:eetG2SEH3gCUwH1J@mydatabase.jzs24r0.mongodb.net/test?retryWrites=true&w=majority&appName=myDatabase";
 
+mongoose.connect(uri)
+  .then(() => console.log("✅ MongoDB Atlas connected successfully"))
+  .catch(err => console.error("❌ Connection error:", err));
 
-// Middleware 1: Logger
-app.use((req, res, next) => {
-    console.log('Middleware 1: Request received at ' + new Date());
-    next();
-});
-
-// Middleware 2: Add custom property
-app.use((req, res, next) => {
-    req.username = "Noman";   // adding data to request
-    console.log("Middleware 2: Added username to request");
-    next();
-});
-
-// Route Handler
-app.get('/', (req, res) => {
-    res.send(`Hello, ${req.username}`);
-});
-
-// Middleware 3: Error handling (example)
-app.use((err, req, res, next) => {
-    console.error("Error:", err.message);
-    res.status(500).send("Something went wrong!");
-});
-
-
-
-
- app.get("/api/users",(req,res)=>{
-  const userAgent = req.headers['user-agent'];   //  request header
-    res.send(`Your User-Agent is: ${userAgent}`);
-  // res.setHeader("x-name","noman");//setting coustom header
-  
-  //   return res.json(users);
- })
-
-  app.get("/api/users/:id",(req,res)=>{
-    const id=Number(req.params.id);
-    const user=users.find((user)=>user.id===id);
-    return res.json(user);
- })
- app.post("/api/users",(req,res)=>{
-    const body=req.body;
-  
-    users.push({...body,id:users.length+1});
-    fs.writeFile("./MOCK_DATA.json",JSON.stringify(users,null,2),(err,data)=>{
-        return  res.json({status:"sucess",id:users.length})
-    })
-   
- })
- app.patch("/api/users/:id",(req,res)=>{
-    const  body=req.body;
-    console.log(body);
-    const id=Number(req.params.id);
-    const userIndex=users.findIndex((user)=>user.id==id);
-    if(userIndex===-1){
-        res.status(404).json({message:"user not found"});//status code not found 
-    }
-   users[userIndex] = { ...users[userIndex], ...body };
-   fs.writeFile("./MOCK_DATA.json", JSON.stringify(users, null, 2), (err) => {
-    if (err) return res.status(500).json({ error: "Error writing file" });
-    res.json({ status: "success", user: users[userIndex] });
-  });
- })
- app.delete("/api/users/:id", (req, res) => {
-  const id = Number(req.params.id);
-
-  const userIndex = users.findIndex((user) => user.id === id);
-
-  if (userIndex === -1) {
-    return res.status(404).json({ error: "User not found" });
+app.use(logReqRes);
+// ✅ GET all users
+app.get("/api/users", async (req, res, next) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (err) {
+    next(err);
   }
-
-  // Remove user
-  const deletedUser = users.splice(userIndex, 1);
-
-  // Save back to file
-  fs.writeFile("./MOCK_DATA.json", JSON.stringify(users, null, 2), (err) => {
-    if (err) return res.status(500).json({ error: "Error writing file" });
-    res.json({ status: "success", deletedUser });
-  });
 });
 
+// ✅ GET single user by ID
+app.get("/api/users/:id", async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
 
+// ✅ POST: Create new user
+app.post("/api/users", async (req, res, next) => {
+  try {
+    const { firstName, lastName, email, gender } = req.body;
 
+    if (!firstName || !lastName || !email) {
+      return res.status(400).json({ message: "firstName, lastName, and email are required" });
+    }
 
- app.listen(PORT,()=>console.log("server started at port :",PORT));
+    const newUser = await User.create({ firstName, lastName, email, gender });
+    res.status(201).json({ message: "User created successfully", user: newUser });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ✅ PATCH: Update user
+app.patch("/api/users/:id", async (req, res, next) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User updated successfully", user: updatedUser });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ✅ DELETE: Remove user
+app.delete("/api/users/:id", async (req, res, next) => {
+  try {
+    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    if (!deletedUser) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User deleted successfully", user: deletedUser });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ✅ Global Error Handling Middleware
+app.use(logResReq2);
+app.listen(PORT, () => console.log(`🚀 Server started on port: ${PORT}`));
