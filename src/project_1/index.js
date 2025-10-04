@@ -63,7 +63,7 @@ app.use((err, req, res, next) => {
     const id=Number(req.params.id);
     const userIndex=users.findIndex((user)=>user.id==id);
     if(userIndex===-1){
-        res.status(404).json({message:"user not found"});
+        res.status(404).json({message:"user not found"});//status code not found 
     }
    users[userIndex] = { ...users[userIndex], ...body };
    fs.writeFile("./MOCK_DATA.json", JSON.stringify(users, null, 2), (err) => {
